@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Generator
 from datetime import datetime
 
 
@@ -26,7 +26,7 @@ class Task:
 
     def display_str(self) -> str:
         return f"{self.str_status()}  {self.str_date()}  {self.str_hour()}  " \
-               f"{self.topic:7} {self.task}"
+               f"{self.topic:8} {self.task}"
 
     def __str__(self) -> str:
         return f"Task: #{self.id:2d} is due on {self.str_date()} at " \
@@ -34,8 +34,26 @@ class Task:
                f" and is {self.str_status()}"
 
     @staticmethod
+    def comp_task(t: 'Task') -> tuple:
+        return (t.date_due, t.hour_due, t.id)
+
+    @staticmethod
     def minimize_lateness(tasks: List['Task']) -> List['Task']:
-        return sorted(tasks, key=lambda x: (x.date_due, x.hour_due, x.id))
+        return sorted(tasks, key=Task.comp_task)
+
+    @staticmethod
+    def display_tasks(tasks: List['Task']) -> Generator[str, None, None]:
+        now = Task.now_task()
+        now_printed = False
+
+        for t in tasks:
+
+            if not now_printed and Task.comp_task(now) < Task.comp_task(t):
+                now_printed = True
+                yield f" ----- Now is {now.str_date()} " \
+                      f"{now.str_hour()} ----- "
+
+            yield t.display_str()
 
     @staticmethod
     def create_task(id: int, csv_line: List[str]) -> 'Task':
@@ -73,6 +91,13 @@ class Task:
         assert type(status) == bool
 
         return Task(id, date_due, hour_due, topic, task, status)
+
+    @staticmethod
+    def now_task() -> 'Task':
+        now = datetime.now()
+        now_date = int(now.strftime("%m%d"))
+        now_time = int(now.strftime("%H%M"))
+        return Task(-100, now_date, now_time, "", "", False)
 
 
 class TaskCategories(Enum):
