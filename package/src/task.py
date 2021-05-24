@@ -5,6 +5,8 @@ from datetime import datetime
 
 class Task:
 
+    topic_len: int = 0
+
     def __init__(self, i: int, dd: int, hd: int, tp: str, ta: str, st: bool):
         self.id: int = i
         self.date_due: int = dd
@@ -25,8 +27,10 @@ class Task:
         return "⬛" if self.status else "⬜"
 
     def display_str(self) -> str:
+        # Extend (or truncate) the topic to the topic length
+        topic: str = self.topic.ljust(Task.topic_len)[:Task.topic_len]
         return f"{self.str_status()}  {self.str_date()}  {self.str_hour()}  " \
-               f"{self.topic:8} {self.task}"
+               f"{topic} {self.task}"
 
     def __str__(self) -> str:
         return f"Task: #{self.id:2d} is due on {self.str_date()} at " \
@@ -89,6 +93,9 @@ class Task:
         assert type(topic) == str
         assert type(task) == str
         assert type(status) == bool
+
+        # Track the longest topic length
+        Task.topic_len = max(len(topic), Task.topic_len)
 
         return Task(id, date_due, hour_due, topic, task, status)
 
