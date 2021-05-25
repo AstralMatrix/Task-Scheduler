@@ -27,3 +27,4 @@ DATE_DUE,HOUR_DUE,TOPIC,TASK,STATUS
 04/25,00:00,220,Test Task,0
 04/25,00:01,220,Test Task,1
 06/23,12:00,220,Test Task,0
+06/23,12:00,Task with a long topic,Test Task,0
