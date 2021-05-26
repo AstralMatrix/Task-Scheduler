@@ -4,9 +4,10 @@ from package.src.task import Task
 from package.src.settings import Settings
 from package.src.error import Error
 from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QListWidget, \
-    QGridLayout, QFileDialog, QMessageBox, QDesktopWidget, QMenuBar, QMenu
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import QRect, QPoint
+    QGridLayout, QFileDialog, QMessageBox, QDesktopWidget, QMenuBar, QMenu, \
+    QListWidgetItem, QPushButton, QHBoxLayout
+from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtCore import QRect, QPoint, Qt
 
 
 class Form(QMainWindow):
@@ -14,6 +15,7 @@ class Form(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.title: str = "TaskMaster"
+        self.setWindowIcon(QIcon("icon.png"))
         self.left: int = 10
         self.top: int = 10
         self.width: int = 640
@@ -36,6 +38,23 @@ class Form(QMainWindow):
         layout: QGridLayout = QGridLayout()
         screen.setLayout(layout)
 
+        buttonLayout: QHBoxLayout = QHBoxLayout()
+
+        removeBtn = QPushButton('Remove Task', self)
+        removeBtn.clicked.connect(self.removeTask)
+        buttonLayout.addWidget(removeBtn)
+        editBtn = QPushButton('Edit Task', self)
+        editBtn.clicked.connect(self.editTask)
+        buttonLayout.addWidget(editBtn)
+        toggleBtn = QPushButton('Toggle Task', self)
+        toggleBtn.clicked.connect(self.toggleTask)
+        buttonLayout.addWidget(toggleBtn)
+        addBtn = QPushButton('Add Task', self)
+        addBtn.clicked.connect(self.addTask)
+        buttonLayout.addWidget(addBtn)
+
+        buttonLayout.insertStretch(1, 1)
+
         mainMenu: QMenuBar = self.menuBar()
         fileMenu: QMenu = mainMenu.addMenu('File')
         editMenu: QMenu = mainMenu.addMenu('Edit')
@@ -56,25 +75,37 @@ class Form(QMainWindow):
         toggleButton: QAction = QAction('Toggle Task', self)
         toggleButton.triggered.connect(self.toggleTask)
         editMenu.addAction(toggleButton)
+        editButton: QAction = QAction('Edit Task', self)
+        editButton.triggered.connect(self.editTask)
+        editMenu.addAction(editButton)
         removeButton: QAction = QAction('Remove Task', self)
         removeButton.triggered.connect(self.removeTask)
         editMenu.addAction(removeButton)
 
         self.taskList: QListWidget = self.createTaskList(
-            Task.display_tasks(
-                self.run(
-                    FileProcessor.load_csv, Settings.active_file, fb=[])))
+            self.run(
+                FileProcessor.load_csv, Settings.active_file, fb=[]))
 
         layout.addWidget(self.taskList)
+
+        layout.addLayout(buttonLayout, 1, 0)
 
         self.show()
 
     def createTaskList(self, data: List[str]) -> QListWidget:
         tl = QListWidget()
         tl.setFont(QFont('noto mono', 10))
-        for item in data:
-            tl.insertItem(0, item)
+        for task in data[::-1]:
+            widget_item: QListWidgetItem = QListWidgetItem(
+                task.display_str(), tl)
+            widget_item.setData(Qt.UserRole, task)
+        tl.itemDoubleClicked.connect(self.toggleTask)
         return tl
+
+    def getIcon(self, task) -> QIcon:
+        if task.status:
+            return QIcon("icons/success.png")
+        return QIcon("icons/close.png")
 
     def openFile(self) -> None:
         options: QFileDialog = QFileDialog.Options()
@@ -85,9 +116,10 @@ class Form(QMainWindow):
         Settings.active_file = fileName
         print(fileName)
 
+        # Create a new QListWidget with the newly loaded tasks, and replace the
+        # previouse QListWidget with the new one.
         layout: QGridLayout = self.taskList.parent().layout()
-        newTaskList: QListWidget = self.createTaskList(
-            Task.display_tasks(tasks))
+        newTaskList: QListWidget = self.createTaskList(tasks)
         layout.replaceWidget(self.taskList, newTaskList)
         self.taskList = newTaskList
 
@@ -101,17 +133,23 @@ class Form(QMainWindow):
             self, "info", f"Adding has not yet been "
             f"added\nPlease edit the csv file itself\n{Settings.active_file}")
 
-    def toggleTask(self) -> None:
+    def toggleTask(self, item=None) -> None:
+        item = self.taskList.currentItem()
+        task = item.data(Qt.UserRole)
+        task.toggle_status()
+        item.setText(task.display_str())
+        # item.setIcon(self.getIcon(task))
+
+    def editTask(self) -> None:
         QMessageBox.information(
-            self, "info", f"Toggling has not yet been "
+            self, "info", f"Editing has not yet been "
             f"added\nPlease edit the csv file itself\n{Settings.active_file}")
 
     def removeTask(self) -> None:
-        QMessageBox.information(
-            self, "info", f"Removing has not yet been "
-            f"added\nPlease edit the csv file itself\n{Settings.active_file}")
+        self.taskList.takeItem(self.taskList.currentRow())
+        # TODO: REMOVE TASK FROM ARRAY
 
-    def run(self, function: Callable, *args, fb: any) -> any:
+    def run(self, function: Callable, *args, fb: any = None) -> any:
         try:
             return function(*args)
         except Error as e:
