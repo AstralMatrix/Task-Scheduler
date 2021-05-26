@@ -1,13 +1,17 @@
+import re
 from enum import Enum
 from typing import List, Generator
 from datetime import datetime
-from package.src.error import Error, ensure
+from package.src.error import Error
 
 
 class Task:
 
     topic_len: int = 0
     display_spaces: int = 2
+    data_pattern = re.compile(
+        r'''^(([0][1-9])|([1][0-2]))\/?(([0][1-9])|([1-2][0-9])|([3][0-1])),((([
+0-1][0-9])|([2][0-3])):?[0-5][0-9])?,[^,"]*,[^,"]*,[01]$''')
 
     def __init__(self, i: int, dd: int, hd: int, tp: str, ta: str, st: bool):
         self.id: int = i
@@ -71,66 +75,31 @@ class Task:
 
     @staticmethod
     def create_task(id: int, csv_line: List[str]) -> 'Task':
-        ensure(len(csv_line) == len(TaskCategories),
-               Error(f"csv line {id} does not have the correct number of "
-                     f"fields (expected: {len(TaskCategories)}, actual: "
-                     f"{len(csv_line)})"))
-
+        stripped_line: List[str] = list(map(lambda x: x.strip(), csv_line))
+        string: str = ",".join(stripped_line)
+        # Verify the csv string is formated properly
+        if not Task.data_pattern.match(string):
+            raise Error(f"Line {id+1} is not properly formatted, it does not "
+                        f"match the regular expression (formatting in "
+                        f"documentation)")
         # Get date
-        raw_date_due: str = csv_line[TaskCategories.DATE_DUE.value] \
-            .replace('/', '')
-
-        ensure(len(raw_date_due) == 4,
-               Error(f"csv item {id} does not have 4 digits for the date"))
-        try:
-            date_due: int = int(raw_date_due)
-        except ValueError:
-            raise Error(f"csv item {id}'s date due is not an integer")
-
+        date_due: int = int(stripped_line[TaskCategories.DATE_DUE.value]
+                            .replace('/', ''))
         # Get time
-        raw_hour_due: str = csv_line[TaskCategories.HOUR_DUE.value] \
-            .replace(':', '')
-
-        if len(raw_hour_due) != 4:
-            raw_hour_due = "2359"
-
-        try:
-            hour_due: int = int(raw_hour_due)
-        except ValueError:
-            raise Error(f"csv item {id}'s hour due is not an integer")
-
+        if stripped_line[TaskCategories.HOUR_DUE.value] == '':
+            hour_due: int = 2359
+        else:
+            hour_due: int = int(stripped_line[TaskCategories.HOUR_DUE.value]
+                                .replace(':', ''))
         # Get topic
-        topic: str = csv_line[TaskCategories.TOPIC.value]
-
+        topic: str = stripped_line[TaskCategories.TOPIC.value]
         # Get task
-        task: str = csv_line[TaskCategories.TASK.value]
-
+        task: str = stripped_line[TaskCategories.TASK.value]
         # Get status
-        raw_status: str = csv_line[TaskCategories.STATUS.value]
-
-        ensure(raw_status == '0' or raw_status == '1',
-               Error(f"csv item {id} does not contain a status of 0 or 1"))
-
-        try:
-            status: bool = bool(int(raw_status))
-        except ValueError:
-            raise Error(f"csv item {id}'s status is not a boolean")
-
-        # Assert types
-        ensure(type(date_due) == int,
-               Error(f"csv item {id}'s date due is not an int"))
-        ensure(type(hour_due) == int,
-               Error("csv item {id}'s hour due is not an int"))
-        ensure(type(topic) == str,
-               Error("csv item {id}'s topic is not a string"))
-        ensure(type(task) == str,
-               Error("csv item {id}'s task is not a string"))
-        ensure(type(status) == bool,
-               Error("csv item {id}'s status is not a boolean"))
+        status: bool = bool(int(stripped_line[TaskCategories.STATUS.value]))
 
         # Track the longest topic length
         Task.topic_len = max(len(topic), Task.topic_len)
-
         return Task(id, date_due, hour_due, topic, task, status)
 
     @staticmethod
