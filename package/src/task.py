@@ -17,6 +17,9 @@ class Task:
         self.task: str = ta
         self.status: bool = st
 
+    def toggle_status(self) -> None:
+        self.status = not self.status
+
     def str_date(self) -> str:
         num_str: str = "{:04d}".format(self.date_due)
         return f"{num_str[0:2]}/{num_str[2:4]}"
