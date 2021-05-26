@@ -23,6 +23,7 @@ class Form(QMainWindow):
         self.initUI()
 
     def initUI(self) -> None:
+        # Set the title and size of the window
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
@@ -32,65 +33,99 @@ class Form(QMainWindow):
         geom.moveCenter(center)
         self.move(geom.topLeft())
 
+        # Create the main panel
         screen: QWidget = QWidget()
         self.setCentralWidget(screen)
 
+        # Create a grid layout and add it to the main panel
         layout: QGridLayout = QGridLayout()
         screen.setLayout(layout)
 
+        # Create the task list widget and add it to the main panel
+        self.taskList: QListWidget = self.createTaskList(
+            self.run(
+                FileProcessor.load_csv, Settings.active_file, fb=[]))
+        layout.addWidget(self.taskList)
+
+        # Create the buttons, adding them to the main panel
+        self.initButtons(layout)
+
+        # Create the context menu
+        self.initMenu()
+
+        self.show()
+
+    def initButtons(self, layout):
+        # Create a horizontal layout to format the buttons
         buttonLayout: QHBoxLayout = QHBoxLayout()
 
-        removeBtn = QPushButton('Remove Task', self)
-        removeBtn.clicked.connect(self.removeTask)
-        buttonLayout.addWidget(removeBtn)
-        editBtn = QPushButton('Edit Task', self)
-        editBtn.clicked.connect(self.editTask)
-        buttonLayout.addWidget(editBtn)
-        toggleBtn = QPushButton('Toggle Task', self)
-        toggleBtn.clicked.connect(self.toggleTask)
-        buttonLayout.addWidget(toggleBtn)
-        addBtn = QPushButton('Add Task', self)
-        addBtn.clicked.connect(self.addTask)
-        buttonLayout.addWidget(addBtn)
+        # Create the remove button
+        removeButton = QPushButton('Remove Task', self)
+        removeButton.clicked.connect(self.removeTask)
+        buttonLayout.addWidget(removeButton)
 
+        # Create the edit button
+        editButton = QPushButton('Edit Task', self)
+        editButton.clicked.connect(self.editTask)
+        buttonLayout.addWidget(editButton)
+
+        # Create the toggle button
+        toggleButton = QPushButton('Toggle Task', self)
+        toggleButton.clicked.connect(self.toggleTask)
+        buttonLayout.addWidget(toggleButton)
+
+        # Create the add button
+        addButton = QPushButton('Add Task', self)
+        addButton.clicked.connect(self.addTask)
+        buttonLayout.addWidget(addButton)
+
+        # Add a spacer between the remove and edit buttons, and add them
+        # to the main layout
         buttonLayout.insertStretch(1, 1)
+        layout.addLayout(buttonLayout, 1, 0)
 
+    def initMenu(self):
+        # Create a new menu bar, with its respective fields
         mainMenu: QMenuBar = self.menuBar()
         fileMenu: QMenu = mainMenu.addMenu('File')
         editMenu: QMenu = mainMenu.addMenu('Edit')
 
+        # Create buttons for the FILE MENU
+        # Create the open action
         openButton: QAction = QAction('Open File', self)
         openButton.triggered.connect(self.openFile)
         fileMenu.addAction(openButton)
+
+        # Create the save action
         saveButton: QAction = QAction('Save File', self)
         saveButton.triggered.connect(self.saveFile)
         fileMenu.addAction(saveButton)
+
+        # Create the exit action
         exitButton: QAction = QAction('Exit', self)
         exitButton.triggered.connect(self.close)
         fileMenu.addAction(exitButton)
 
+        # Create buttons for the EDIT MENU
+        # Create the add action
         addButton: QAction = QAction('Add Task', self)
         addButton.triggered.connect(self.addTask)
         editMenu.addAction(addButton)
+
+        # Create the toggle action
         toggleButton: QAction = QAction('Toggle Task', self)
         toggleButton.triggered.connect(self.toggleTask)
         editMenu.addAction(toggleButton)
+
+        # Create the edit action
         editButton: QAction = QAction('Edit Task', self)
         editButton.triggered.connect(self.editTask)
         editMenu.addAction(editButton)
+
+        # Create the remove action
         removeButton: QAction = QAction('Remove Task', self)
         removeButton.triggered.connect(self.removeTask)
         editMenu.addAction(removeButton)
-
-        self.taskList: QListWidget = self.createTaskList(
-            self.run(
-                FileProcessor.load_csv, Settings.active_file, fb=[]))
-
-        layout.addWidget(self.taskList)
-
-        layout.addLayout(buttonLayout, 1, 0)
-
-        self.show()
 
     def createTaskList(self, data: List[str]) -> QListWidget:
         tl = QListWidget()
