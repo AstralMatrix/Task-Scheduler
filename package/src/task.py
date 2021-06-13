@@ -46,6 +46,17 @@ class Task:
             string += f"{item}" + ' ' * Task.display_spaces
         return string.strip()
 
+    def toCsvString(self) -> str:
+        def inserted(x, y, z):
+            x.insert(y, z)
+            return x
+        dd: str = ''.join(inserted(list(str(self.date_due).zfill(4)), 2, '/'))
+        hd: str = ''.join(inserted(list(str(self.hour_due).zfill(4)), 2, ':'))
+        tp: str = self.topic
+        ta: str = self.task
+        st: str = str(int(self.status))
+        return f"{dd},{hd},{tp},{ta},{st}"
+
     def __str__(self) -> str:
         return f"Task: #{self.id:2d} is due on {self.str_date()} at " \
                f"{self.str_hour()} for {self.topic} is \"{self.task}\"" \
@@ -72,6 +83,10 @@ class Task:
                       f"{now.str_hour()} ----- "
 
             yield t.display_str()
+
+    @staticmethod
+    def reset_topic_len():
+        Task.topic_len = 0
 
     @staticmethod
     def create_task(id: int, csv_line: List[str]) -> 'Task':
