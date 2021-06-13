@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import List, Generator
 from datetime import datetime
-from package.src.error import Error
+from error import Error
 
 
 class Task:

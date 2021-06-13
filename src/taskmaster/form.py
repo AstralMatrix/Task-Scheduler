@@ -1,14 +1,14 @@
 from typing import List, Callable
-from package.src.file_processor import FileProcessor
-from package.src.task import Task
-from package.src.settings import Settings
-from package.src.error import Error
-from package.src.task_container import TaskContainer
 from PyQt5.QtWidgets import QWidget, QMainWindow, QAction, QListWidget, \
     QGridLayout, QFileDialog, QMessageBox, QDesktopWidget, QMenuBar, QMenu, \
     QListWidgetItem, QPushButton, QHBoxLayout, QLabel, QInputDialog, QLineEdit
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import QRect, QPoint, Qt
+from file_processor import FileProcessor
+from task import Task
+from settings import Settings
+from error import Error
+from task_container import TaskContainer
 
 
 class Form(QMainWindow):
@@ -16,7 +16,7 @@ class Form(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.title: str = "TaskMaster"
-        self.setWindowIcon(QIcon("icon.png"))
+        self.setWindowIcon(QIcon("resources/icon.png"))
         self.left: int = 10
         self.top: int = 10
         self.width: int = 640

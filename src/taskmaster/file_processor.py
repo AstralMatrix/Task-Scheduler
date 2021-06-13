@@ -1,7 +1,7 @@
 import csv
 from typing import List, Iterator
-from package.src.task import Task
-from package.src.error import Error
+from task import Task
+from error import Error
 
 
 class FileProcessor:

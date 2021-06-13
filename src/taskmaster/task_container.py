@@ -1,7 +1,7 @@
 from typing import List, Callable, Generator
-from package.src.task import Task
-from package.src.file_processor import FileProcessor
-from package.src.error import Error
+from task import Task
+from file_processor import FileProcessor
+from error import Error
 
 
 class TaskContainer:
